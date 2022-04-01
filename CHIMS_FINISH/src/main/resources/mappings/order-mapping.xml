@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="OrderDAO">
+
+	<select id="getOrderNo" resultType="int">
+		SELECT nvl(max(order_no),0)
+		From ORDERS
+	</select>
+	
+	<update id="updateOrder" parameterType="orderDetail">
+		UPDATE ORDERS 
+		SET ORDER_STATUS = #{order_status} , ORDER_CONFIRM_DATE = to_date(sysdate,'YYYY-MM-DD')
+		WHERE ORDER_NO = #{order_no}
+	</update>
+
+	<select id="getOrderList" parameterType="order" resultType="orderDetail">
+		SELECT o.order_no, o.order_date,o.order_status,m.dept_no
+		FROM ORDERS o, MEMBER m
+		WHERE o.member_id = m.member_id 
+		ORDER BY o.order_no
+	</select>
+	
+	<select id="getConfirmList" parameterType="order" resultType="orderDetail">
+		SELECT o.order_no , o.order_date, o.order_confirm_date confirm_date, o.order_status, m.dept_no
+		FROM ORDERS o, MEMBER m
+		WHERE o.member_id = m.member_id and o.order_status != 'member_waiting'
+		ORDER BY ORDER_NO DESC
+	</select>
+	
+	<select id="getMemberOrderList" parameterType="member" resultType="order">
+		SELECT O.ORDER_NO, O.ORDER_DATE, O.ORDER_STATUS 
+		FROM ORDERS O, MEMBER M, DEPT D
+		WHERE O.MEMBER_ID = M.MEMBER_ID AND M.DEPT_NO = D.DEPT_NO AND M.MEMBER_ID = #{member_id}	
+		ORDER BY DECODE(ORDER_STATUS,'admin_approve',1), DECODE(ORDER_STATUS,'member_waiting',2), ORDER_NO
+	</select>
+	
+	<select id="getOrderDetail" parameterType="order" resultType="orderDetail">
+		SELECT o.order_no order_no,o.order_status order_status, o.order_date order_date,o.order_confirm_date confirm_date, p.product_code product_code, p.product_category product_category, p.product_name product_name,m.dept_no dept_no,op.order_product_cnt order_product_cnt,m.member_id order_member_id,m.member_name order_member_name 
+		FROM ORDERS o , ORDER_PRODUCT op , MEMBER m, PRODUCT p 
+		WHERE o.order_no = op.order_no and o.member_id = m.member_id and op.product_code = p.product_code and o.order_no=#{order_no}
+	</select>
+	
+	<insert id = "insertOrder"  parameterType="orderDetail">
+		<![CDATA[
+		INSERT INTO ORDERS (ORDER_NO,ORDER_DATE,ORDER_STATUS,MEMBER_ID) values(#{order_no},to_date(sysdate,'yyyy-MM-dd'),'member_waiting',#{order_member_id})
+		]]>
+	</insert>
+	
+	<insert id = "insertOrderProduct"  parameterType="orderDetail">
+		<![CDATA[
+		INSERT INTO ORDER_PRODUCT (ORDER_PRODUCT_NO, ORDER_PRODUCT_CNT, ORDER_NO, PRODUCT_CODE) 
+		VALUES ((SELECT NVL(MAX(order_product_no),0)+1 FROM ORDER_PRODUCT),#{order_product_cnt},#{order_no},#{product_code})
+		]]>
+	</insert>
+	
+</mapper>

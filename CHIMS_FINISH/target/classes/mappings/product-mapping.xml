@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ProductDAO">
+	
+	<insert id="insertProduct" parameterType="product">
+		<![CDATA[
+		INSERT INTO PRODUCT (PRODUCT_CODE,PRODUCT_CATEGORY,PRODUCT_NAME,PRODUCT_CNT,PRODUCT_ETC) 
+		VALUES (#{product_code},#{product_category},#{product_name},#{product_cnt},#{product_etc})
+		]]>
+	</insert>
+	
+	<update id="updateProduct">
+		<![CDATA[
+		UPDATE PRODUCT SET 
+			PRODUCT_CODE=#{product_code},
+			PRODUCT_CATEGORY=#{product_category},
+			PRODUCT_NAME=#{product_name},
+			PRODUCT_CNT=#{product_cnt},
+			PRODUCT_ETC=#{product_etc}
+		WHERE PRODUCT_CODE = #{product_code}
+		]]>
+	</update>
+
+	<select id="getDeptProduct" parameterType="orderDetail" resultType="orderDetail">
+		<![CDATA[
+			SELECT DEPT_PRODUCT_NO, PRODUCT_CODE,DEPT_PRODUCT_CNT ORDER_PRODUCT_CNT
+			FROM DEPT_PRODUCT 
+			WHERE PRODUCT_CODE = #{product_code} and DEPT_NO = #{dept_no}
+		]]>
+	</select>
+	
+	<update id="updateDeptProduct" parameterType="orderDetail" >
+		UPDATE DEPT_PRODUCT
+		SET DEPT_PRODUCT_CNT = #{order_product_cnt}
+		WHERE  PRODUCT_CODE = #{product_code} and dept_no = #{dept_no}
+	</update>
+	
+	<insert id = "insertDeptProduct" parameterType="orderDetail" >
+		INSERT INTO DEPT_PRODUCT (DEPT_PRODUCT_NO, PRODUCT_CODE, DEPT_PRODUCT_CNT,DEPT_NO)
+		VALUES ((SELECT NVL(MAX(DEPT_PRODUCT_NO),0)+1 FROM DEPT_PRODUCT), #{product_code} , #{order_product_cnt} , #{dept_no})
+	</insert>
+	
+	
+	<delete id="deleteProduct" parameterType="product">
+		<![CDATA[
+			DELETE PRODUCT 
+			WHERE PRODUCT_CODE = #{product_code}
+		]]>
+	</delete>
+	
+	<select id="getProduct" parameterType="product" resultType="product">
+		<![CDATA[
+			SELECT *
+			FROM PRODUCT
+			WHERE PRODUCT_CODE = #{product_code}
+		]]>
+	</select>
+	
+	<select id="getMemberProduct" resultType="product">
+		SELECT p.PRODUCT_CODE,p.PRODUCT_CATEGORY,p.PRODUCT_NAME,dp.DEPT_PRODUCT_CNT PRODUCT_CNT,p.PRODUCT_ETC
+		FROM PRODUCT p, DEPT_PRODUCT dp
+		WHERE p.product_code = dp.product_code and p.product_code = #{product_code} and dp.dept_no = #{dept_no}
+	</select>
+	
+	<select id="getAdminProductList" resultType="product">
+		SELECT *
+		FROM PRODUCT
+		ORDER BY PRODUCT_CODE DESC
+	</select>
+	
+	<select id="getMemberProductList" parameterType="member" resultType="product">
+		SELECT p.product_code,p.product_category,p.product_name,dp.dept_product_cnt product_cnt,p.product_etc 
+		FROM DEPT_PRODUCT dp , PRODUCT p 
+		WHERE dp.product_code = p.product_code and dp.dept_no=(SELECT DEPT_NO FROM MEMBER WHERE DEPT_NO = #{dept_no})
+	</select>
+		
+</mapper>
